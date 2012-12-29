@@ -44,51 +44,25 @@
 #include "constants.h"		/* WORD_LEN */
 #include "io.h"			/* enum response */
 
-/* Names of responses.
- * Names should always just be the constant with leading R_ removed.
- */
-const char     RESPONSES[NUM_RESPONSES][WORD_LEN] = {
-	/* 'Pull' responses (initiated by client command) */
-	"OKAY",			/* R_OKAY */
-	"WHAT",			/* R_WHAT */
-	"FAIL",			/* R_FAIL */
-	"OOPS",			/* R_OOPS */
-	/* 'Push' responses (initiated by server) */
-	"OHAI",			/* R_OHAI */
-	"TTFN",			/* R_TTFN */
-	"STAT",			/* R_STAT */
-	"TIME",			/* R_TIME */
-	"DBUG",			/* R_DBUG */
+/* Structure of information about how to handle a response. */
+struct r_data {
+	const char	name [WORD_LEN];	/* Symbolic name of response */
+	bool		send_to_stdout;	/* Send response to client? */
+	bool		send_to_stderr;	/* Send response to error stream? */
 };
 
-/* Whether or not responses should be sent to stdout (to the client). */
-bool		RESPONSE_STDOUT[NUM_RESPONSES] = {
-	/* 'Pull' responses (initiated by client command) */
-	true,			/* R_OKAY */
-	true,			/* R_WHAT - usually not a real error per se */
-	true,			/* R_FAIL */
-	true,			/* R_OOPS */
-	/* 'Push' responses (initiated by server) */
-	true,			/* R_OHAI */
-	true,			/* R_TTFN */
-	true,			/* R_STAT */
-	true,			/* R_TIME */
-	false,			/* R_DBUG - should come up in logs etc. */
-};
-
-/* Whether or not responses should be sent to stderr (usually logs/console). */
-bool		RESPONSE_STDERR[NUM_RESPONSES] = {
-	/* 'Pull' responses (initiated by client command) */
-	false,			/* R_OKAY */
-	false,			/* R_WHAT - usually not a real error per se */
-	true,			/* R_FAIL */
-	true,			/* R_OOPS */
-	/* 'Push' responses (initiated by server) */
-	false,			/* R_OHAI */
-	false,			/* R_TTFN */
-	false,			/* R_STAT */
-	false,			/* R_TIME */
-	true,			/* R_DBUG - should come up in logs etc. */
+/* Data for the responses used by cuppa. */
+static const struct r_data RESPONSES[NUM_RESPONSES] = {
+	/* Name stdout? stderr? */
+	{"OKAY", true, false},	/* R_OKAY */
+	{"WHAT", true, false},	/* R_WHAT */
+	{"FAIL", true, true},	/* R_FAIL */
+	{"OOPS", true, true},	/* R_OOPS */
+	{"OHAI", true, false},	/* R_OHAI */
+	{"TTFN", true, false},	/* R_TTFN */
+	{"STAT", true, false},	/* R_STAT */
+	{"TIME", true, false},	/* R_TIME */
+	{"DBUG", false, true}	/* R_DBUG */
 };
 
 /* Sends a response to standard out and, for certain responses, standard error.
@@ -97,22 +71,22 @@ bool		RESPONSE_STDERR[NUM_RESPONSES] = {
 enum response
 vresponse(enum response code, const char *format, va_list ap)
 {
-	va_list ap2;
+	va_list		ap2;
+	const struct r_data *r;
 
+	r = &(RESPONSES[(int)code]);
 	va_copy(ap2, ap);
 
-	if (RESPONSE_STDOUT[(int)code]) {
-		printf("%s ", RESPONSES[(int)code]);
+	if (r->send_to_stdout) {
+		printf("%s ", r->name);
 		vprintf(format, ap);
 		printf("\n");
 	}
-
-	if (RESPONSE_STDERR[(int)code]) {
-		fprintf(stderr, "%s ", RESPONSES[(int)code]);
+	if (r->send_to_stderr) {
+		fprintf(stderr, "%s ", r->name);
 		vfprintf(stderr, format, ap2);
 		fprintf(stderr, "\n");
 	}
-
 	return code;
 }
 

@@ -69,6 +69,15 @@ enum error_blame {
 	NUM_ERROR_BLAMES	/* Number of items in enum */
 };
 
+/* Categories of severity for errors. */
+enum error_severity {
+	ES_NORMAL,		/* The program should recover and continue */
+	ES_FATAL,		/* The program should halt ASAP */
+	ES_ABORT_NOW,		/* The error handler should abort immediately */
+	/*--------------------------------------------------------------------*/
+	NUM_ERROR_SEVERITIES	/* Number of items in enum */
+};
+
 void		dbug      (const char *format,...);
 enum error	error(enum error code, const char *format,...);
 

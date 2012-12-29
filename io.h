@@ -38,8 +38,7 @@
 
 /* Four-character response codes.
  *
- * NOTE: If you're adding new responses here, PLEASE update the arrays in io.c
- * to add a name and behaviour information to each new response.
+ * NOTE: If you're adding new responses here, PLEASE update RESPONSES in io.c.
  */
 enum response {
 	/* 'Pull' responses (initiated by client command) */

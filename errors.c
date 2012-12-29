@@ -39,47 +39,66 @@
 #include "io.h"			/* vresponse, enum response */
 #include "messages.h"		/* MSG_ERR_NOMEM */
 
+/* Structure of information about how to handle an error. */
+struct e_data {
+	const char     *name;	/* Symbolic name of this error */
+	enum error_blame blame;	/* Who to blame for this error */
+	enum error_severity severity;	/* Severity of this error */
+};
+
 /* Names for each error in the system.
  * Names should always just be the constant with leading E_ removed.
  * (More human-friendly information should be in the error string.)
  */
-const char     *ERRORS[NUM_ERRORS] = {
-	"OK",			/* E_OK */
-	/* User errors */
-	"NO_FILE",		/* E_NO_FILE */
-	"BAD_STATE",		/* E_BAD_STATE */
-	"BAD_COMMAND",		/* E_BAD_COMMAND */
-	/* Environment errors */
-	"BAD_FILE",		/* E_BAD_FILE */
-	"BAD_CONFIG",		/* E_BAD_CONFIG */
-	/* System errors */
-	"AUDIO_INIT_FAIL",	/* E_AUDIO_INIT_FAIL */
-	"INTERNAL_ERROR",	/* E_INTERNAL_ERROR */
-	"NO_MEM",		/* E_NO_MEM */
-	/* Misc */
-	"EOF",			/* E_EOF */
-	"UNKNOWN",		/* E_UNKNOWN */
-};
-
-/* Mappings of errors to the factor that we assign blame to.
- * This is used to decide which sort of response to send the error as.
- */
-const enum error_blame ERROR_BLAME[NUM_ERRORS] = {
-	EB_PROGRAMMER,		/* E_OK - should never raise an error message */
-	/* User errors */
-	EB_USER,		/* E_NO_FILE */
-	EB_USER,		/* E_BAD_STATE */
-	EB_USER,		/* E_BAD_COMMAND */
-	/* Environment errors */
-	EB_ENVIRONMENT,		/* E_BAD_FILE */
-	EB_ENVIRONMENT,		/* E_BAD_CONFIG */
-	/* System errors */
-	EB_ENVIRONMENT,		/* E_AUDIO_INIT_FAIL */
-	EB_PROGRAMMER,		/* E_INTERNAL_ERROR */
-	EB_ENVIRONMENT,		/* E_NO_MEM */
-	/* Misc */
-	EB_PROGRAMMER,		/* E_EOF - should never show an error message */
-	EB_PROGRAMMER,		/* E_UNKNOWN - error should be more specific */
+static const struct e_data ERRORS[NUM_ERRORS] = {
+	{"OK",
+		EB_PROGRAMMER,	/* Should never go to error handler */
+		ES_NORMAL
+	},
+	{"NO_FILE",
+		EB_USER,
+		ES_NORMAL
+	},
+	{"BAD_STATE",
+		EB_USER,
+		ES_NORMAL
+	},
+	{"BAD_COMMAND",
+		EB_USER,
+		ES_NORMAL
+	},
+	{"BAD_FILE",
+		EB_ENVIRONMENT,
+		ES_NORMAL
+	},
+	{"BAD_CONFIG",
+		EB_ENVIRONMENT,
+		ES_FATAL
+	},
+	{"AUDIO_INIT_FAIL",
+		EB_ENVIRONMENT,
+		ES_FATAL
+	},
+	{"INTERNAL_ERROR",
+		EB_PROGRAMMER,
+		ES_NORMAL
+	},
+	{"NO_MEM",
+		EB_ENVIRONMENT,
+		ES_FATAL
+	},
+	{"EOF",
+		EB_PROGRAMMER,	/* Should usually never go to error handler */
+		ES_NORMAL
+	},
+	{"INCOMPLETE",
+		EB_PROGRAMMER,	/* Should usually never go to error handler */
+		ES_NORMAL
+	},
+	{"UNKNOWN",
+		EB_PROGRAMMER,
+		ES_FATAL
+	},
 };
 
 /* This maps error blame factors to response codes. */
@@ -113,12 +132,12 @@ error(enum error code, const char *format,...)
 {
 	va_list		ap;	/* Variadic arguments */
 	va_list		ap2;	/* Variadic arguments */
-	const char     *emsg;	/* Stores error name */
 	char           *buf;	/* Temporary buffer for rendering error */
 	size_t		buflen;	/* Length for creating buffer */
+	const struct e_data *e;	/* Data for error code; */
 
+	e = &(ERRORS[(int)code]);
 	buf = NULL;
-	emsg = ERRORS[(int)code];
 
 	/* LINTED lint doesn't seem to like va_start */
 	va_start(ap, format);
@@ -141,8 +160,8 @@ error(enum error code, const char *format,...)
 	if (buf != NULL)
 		vsnprintf(buf, buflen + 1, format, ap2);
 
-	response(BLAME_RESPONSE[ERROR_BLAME[code]], "%s %s",
-		 emsg,
+	response(BLAME_RESPONSE[e->blame], "%s %s",
+		 e->name,
 		 buf == NULL ? MSG_ERR_NOMEM : buf);
 	va_end(ap);
 

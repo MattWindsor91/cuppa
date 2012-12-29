@@ -33,7 +33,5 @@
 
 #include <stdint.h>
 
-#include <libavcodec/avcodec.h>
-
 /* See constants.c for more constants (especially macro-based ones) */
 const uint64_t	USECS_IN_SEC = 1000000;

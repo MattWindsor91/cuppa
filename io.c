@@ -81,11 +81,13 @@ vresponse(enum response code, const char *format, va_list ap)
 		printf("%s ", r->name);
 		vprintf(format, ap);
 		printf("\n");
+                fflush(stdout);
 	}
 	if (r->send_to_stderr) {
 		fprintf(stderr, "%s ", r->name);
 		vfprintf(stderr, format, ap2);
 		fprintf(stderr, "\n");
+                fflush(stderr);
 	}
 	return code;
 }

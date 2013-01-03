@@ -25,6 +25,7 @@
 -Tfd_mask
 -Tfd_set
 -Tlinker_sym_tT
+-Tpid_t
 -Tring_buffer_size_t
 -Tu_char
 -Tu_int

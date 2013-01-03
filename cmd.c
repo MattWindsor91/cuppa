@@ -1,4 +1,4 @@
-/* 
+/*******************************************************************************
  * cmd.c - command parser
  *   Part of cuppa, the Common URY Playout Package Architecture
  *
@@ -33,8 +33,6 @@
 
 #define _POSIX_C_SOURCE 200809
 
-/**  INCLUDES  ****************************************************************/
-
 #include <ctype.h>
 #include <stdbool.h>		/* bool */
 #include <stdio.h>		/* getline */
@@ -47,32 +45,23 @@
 #include "io.h"			/* response */
 #include "messages.h"		/* Messages (usually errors) */
 
-/**  GLOBAL VARIABLES  ********************************************************/
-
-
-
-/**  STATIC PROTOTYPES  *******************************************************/
-
-static enum error handle_cmd(void *usr, const struct cmd *cmds);
 static enum error
 exec_cmd(void *usr,
 	 const struct cmd *cmds,
 	 const char *word,
 	 const char *arg);
-static enum error 
+static enum error
 exec_cmd_struct(void *usr,
 		const struct cmd *cmd,
 		const char *arg);
 
-/**  PUBLIC FUNCTIONS  ********************************************************/
-
 /*
- * Checks to see if there is a commands waiting on stdio and, if there
- * is, sends it to the command handler.
- *
- * 'usr' is a pointer to any user data that should be passed to
- * executed commands; 'cmds' is a pointer to an END_CMDS-terminated
- * array of command definitions (see cmd.h for details).
+ * Checks to see if there is a commands waiting on stdio and, if there is,
+ * sends it to the command handler.
+ * 
+ * 'usr' is a pointer to any user data that should be passed to executed
+ * commands; 'cmds' is a pointer to an END_CMDS-terminated array of command
+ * definitions (see cmd.h for details).
  */
 enum error
 check_commands(void *usr, const struct cmd *cmds)
@@ -85,10 +74,8 @@ check_commands(void *usr, const struct cmd *cmds)
 	return err;
 }
 
-/**  STATIC FUNCTIONS  ********************************************************/
-
 /* Processes the command currently waiting at standard input. */
-static enum error
+enum error
 handle_cmd(void *usr, const struct cmd *cmds)
 {
 	size_t		length;
@@ -143,7 +130,8 @@ exec_cmd(void *usr, const struct cmd *cmds, const char *word, const char *arg)
 	for (cmd = cmds, gotcmd = false;
 	     cmd->function_type != C_END_OF_LIST && !gotcmd;
 	     cmd++) {
-		if (strncmp(cmd->word, word, WORD_LEN - 1) == 0) {
+		if (cmd->word == ANY ||
+		    strncmp(cmd->word, word, WORD_LEN - 1) == 0) {
 			gotcmd = true;
 			err = exec_cmd_struct(usr, cmd, arg);
 		}
@@ -161,17 +149,20 @@ exec_cmd_struct(void *usr, const struct cmd *cmd, const char *arg)
 	enum error	err = E_OK;
 
 	switch (cmd->function_type) {
-	case C_NULLARY:
+	case C_NULLARY:	/* No arguments */
 		if (arg == NULL)
 			err = cmd->function.ncmd(usr);
 		else
 			err = error(E_BAD_COMMAND, "%s", MSG_CMD_ARGN);
 		break;
-	case C_UNARY:
+	case C_UNARY:		/* One argument */
 		if (arg == NULL)
 			err = error(E_BAD_COMMAND, "%s", MSG_CMD_ARGU);
 		else
 			err = cmd->function.ucmd(usr, arg);
+		break;
+	case C_REJECT:		/* Throw a wobbly */
+		err = error(E_COMMAND_REJECTED, "%s", cmd->function.reason);
 		break;
 	case C_END_OF_LIST:
 		err = error(E_INTERNAL_ERROR, "%s", MSG_CMD_HITEND);

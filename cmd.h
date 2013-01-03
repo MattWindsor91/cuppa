@@ -1,6 +1,6 @@
 /*
- * cmd.h - command parser
- *   Part of cuppa, the Common URY Playout Package Architecture
+ * cmd.h - command parser Part of cuppa, the Common URY Playout Package
+ * Architecture
  *
  * Contributors:  Matt Windsor <matt.windsor@ury.org.uk>
  */
@@ -38,22 +38,27 @@
 #include "errors.h"		/* enum error */
 
 /*
- * Any code defining a set of commands SHOULD use these macros and
- * MUST terminate with END_CMDS or an equivalent.
+ * Any code defining a set of commands SHOULD use these macros and MUST
+ * terminate with END_CMDS or an equivalent.
+ *
+ * Sets of commands are processed top-down.
  *
  * Example:
  *
- * struct cmd *foo = {
- *   NCMD("acme", command_with_no_argument),
- *   UCMD("ecma", command_with_an_argument),
- *   END_CMDS
- * }
+ * struct cmd *foo = { NCMD("acme", command_with_no_argument), UCMD("ecma",
+ * command_with_an_argument), REJECT("ecme", "this command is obsolete, use
+ * acme instead"),
+ * END_CMDS };
  */
 #define NCMD(word, func) {word, C_NULLARY, {.ncmd = func}}
 #define UCMD(word, func) {word, C_UNARY, {.ucmd = func}}
+#define REJECT(word, why) {word, C_REJECT, {.reason = why}}
 #define END_CMDS {"XXXX", C_END_OF_LIST, {.ignore = '\0'}}
+#define ANY NULL		/* Use for matching all commands not yet
+				 * matched */
 
-/* Commands have to follow one of these signatures in order to fit into the
+/*
+ * Commands have to follow one of these signatures in order to fit into the
  * command parser - the macro to use is specified in the comment above each
  * typedef.
  */
@@ -63,16 +68,19 @@ typedef enum error (*nullary_cmd_ptr) (void *usr);
 /* UCMD - unary command - takes one string argument and user data */
 typedef enum error (*unary_cmd_ptr) (void *usr, const char *arg);
 
-/* Type of command, used for the tagged union in struct cmd.  You shouldn't need
- * to use this outside of the macros above in an ideal world.
+/*
+ * Type of command, used for the tagged union in struct cmd.  You shouldn't
+ * need to use this outside of the macros above in an ideal world.
  */
 enum cmd_type {
 	C_NULLARY,		/* Command accepts no arguments */
 	C_UNARY,		/* Command accepts one argument */
+	C_REJECT,		/* Command is to be rejected */
 	C_END_OF_LIST		/* Sentinel for end of command list */
 };
 
-/* Command structure - you shouldn't ever need to use this directly.  Use the
+/*
+ * Command structure - you shouldn't ever need to use this directly.  Use the
  * macros above where possible.
  */
 struct cmd {
@@ -81,10 +89,12 @@ struct cmd {
 	union {
 		nullary_cmd_ptr	ncmd;	/* No-argument command */
 		unary_cmd_ptr	ucmd;	/* One-argument command */
-		char		ignore;	/* Use with C_END_OF_LIST */
+		char           *reason;	/* Reason for error pseudo-commands */
+		char		ignore;	/* Use with special commands */
 	}		function;	/* Function pointer to actual command */
 };
 
 enum error	check_commands(void *usr, const struct cmd *cmds);
+enum error	handle_cmd(void *usr, const struct cmd *cmds);
 
 #endif				/* !CUPPA_CMD_H */

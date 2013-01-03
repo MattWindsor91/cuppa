@@ -1,4 +1,4 @@
-/*
+/*******************************************************************************
  * io.h - input/output
  *   Part of cuppa, the Common URY Playout Package Architecture
  *
@@ -46,6 +46,7 @@ enum response {
 	R_WHAT,			/* Request was invalid/user error */
 	R_FAIL,			/* Error, pointing blame at environment */
 	R_OOPS,			/* Error, pointing blame at programmer */
+        R_NOPE,			/* Request was probably valid, but forbidden. */
 	/* 'Push' responses (initiated by server) */
 	R_OHAI,			/* Server starting up */
 	R_TTFN,			/* Server shutting down */

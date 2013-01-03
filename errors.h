@@ -34,6 +34,21 @@
 #ifndef CUPPA_ERRORS_H
 #define CUPPA_ERRORS_H
 
+/* Common error macros. */
+#define SAFE_CALLOC(err, ptr, count, type) do {			\
+	if (*err == E_OK) {					\
+		ptr = calloc((size_t)count, sizeof(type));	\
+		if (ptr == NULL)				\
+			*err = error(E_NO_MEM,			\
+		 	   "couldn't alloc ptr");		\
+	}							\
+} while (0)
+#define ERR_IF_NULL(err, ptr) do {				\
+	if (*err == E_OK && ptr == NULL)			\
+		*err = error(E_INTERNAL_ERROR,			\
+		    "passed NULL, expecting ptr");		\
+} while (0)
+
 /* Categories of error.
  *
  * NOTE: If you're adding new errors here, PLEASE update the arrays in errors.c
@@ -45,6 +60,7 @@ enum error {
 	E_NO_FILE,		/* Tried to read nonexistent file */
 	E_BAD_STATE,		/* State transition not allowed */
 	E_BAD_COMMAND,		/* Command was malformed */
+        E_COMMAND_REJECTED,     /* Command was valid but refused */
 	/* Environment errors */
 	E_BAD_FILE,		/* Tried to read corrupt file */
 	E_BAD_CONFIG,		/* Program improperly configured */
@@ -63,6 +79,7 @@ enum error {
 /* Categories of blame for errors. */
 enum error_blame {
 	EB_USER,		/* End-user is at fault */
+        EB_POLICY,		/* Request for disallowed action caused error */
 	EB_ENVIRONMENT,		/* Environment is at fault */
 	EB_PROGRAMMER,		/* Programmer is at fault */
 	/*--------------------------------------------------------------------*/

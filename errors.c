@@ -67,6 +67,10 @@ static const struct e_data ERRORS[NUM_ERRORS] = {
 		EB_USER,
 		ES_NORMAL
 	},
+	{"COMMAND_REJECTED",
+		EB_POLICY,
+		ES_NORMAL
+	},
 	{"BAD_FILE",
 		EB_ENVIRONMENT,
 		ES_NORMAL
@@ -104,6 +108,7 @@ static const struct e_data ERRORS[NUM_ERRORS] = {
 /* This maps error blame factors to response codes. */
 const enum response BLAME_RESPONSE[NUM_ERROR_BLAMES] = {
 	R_WHAT,			/* EB_USER */
+	R_NOPE,			/* EB_POLICY */
 	R_FAIL,			/* EB_ENVIRONMENT */
 	R_OOPS,			/* EB_PROGRAMMER */
 };

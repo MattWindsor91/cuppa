@@ -1,4 +1,4 @@
-/*
+/*******************************************************************************
  * io.c - input/output
  *   Part of cuppa, the Common URY Playout Package Architecture
  *
@@ -58,6 +58,7 @@ static const struct r_data RESPONSES[NUM_RESPONSES] = {
 	{"WHAT", true, false},	/* R_WHAT */
 	{"FAIL", true, true},	/* R_FAIL */
 	{"OOPS", true, true},	/* R_OOPS */
+        {"NOPE", true, true},	/* R_NOPE */
 	{"OHAI", true, false},	/* R_OHAI */
 	{"TTFN", true, false},	/* R_TTFN */
 	{"STAT", true, false},	/* R_STAT */

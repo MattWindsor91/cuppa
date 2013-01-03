@@ -49,16 +49,19 @@ static enum error
 exec_cmd(void *usr,
 	 const struct cmd *cmds,
 	 const char *word,
-	 const char *arg);
+	 const char *arg,
+	 FILE *prop);
 static enum error
 exec_cmd_struct(void *usr,
 		const struct cmd *cmd,
-		const char *arg);
+		const char *word,
+		const char *arg,
+		FILE *prop);
 
 /*
- * Checks to see if there is a commands waiting on stdio and, if there is,
+ * Checks to see if there is a command waiting on stdin and, if there is,
  * sends it to the command handler.
- * 
+ *
  * 'usr' is a pointer to any user data that should be passed to executed
  * commands; 'cmds' is a pointer to an END_CMDS-terminated array of command
  * definitions (see cmd.h for details).
@@ -69,50 +72,69 @@ check_commands(void *usr, const struct cmd *cmds)
 	enum error	err = E_OK;
 
 	if (input_waiting())
-		err = handle_cmd(usr, cmds);
+		err = handle_cmd(usr, cmds, stdin, NULL);
 
 	return err;
 }
-
-/* Processes the command currently waiting at standard input. */
+/* Processes the command currently waiting on the given stream.
+ * If the command is set to be handled by PROPAGATE, it will be sent through
+ * prop; it is an error if prop is NULL and PROPAGATE is reached.
+ */
 enum error
-handle_cmd(void *usr, const struct cmd *cmds)
+handle_cmd(void *usr, const struct cmd *cmds, FILE *in, FILE *prop)
 {
-	size_t		length;
+	ssize_t		length;
 	enum error	err = E_OK;
 	char           *buffer = NULL;
-	char           *argument = NULL;
+	char           *word = NULL;
+	char           *arg = NULL;
+	char	       *end = NULL;
 	size_t		num_bytes = 0;
 
-	length = getline(&buffer, &num_bytes, stdin);
+	length = getline(&buffer, &num_bytes, in);
 	dbug("got command: %s", buffer);
 
-	/* Remember to count newline */
-	if (length < WORD_LEN)
-		err = error(E_BAD_COMMAND, MSG_CMD_NOWORD);
+	/* Silently fail if the command is actually end of file */
+	if (length == -1) {
+		dbug("end of file");
+		err = E_EOF;
+	}
 	if (err == E_OK) {
-		/* Find start of argument(s) */
-		size_t		i;
-		size_t		j;
+		end = (buffer + length); 
+	
+		/* Drop leading whitespace and find word */
+		for (word = buffer; word < end && isspace((int)*word); word++)
+			*word = '\0';
+		if (word >= end)
+			err = error(E_BAD_COMMAND, MSG_CMD_NOWORD);
+	}
+	if (err == E_OK) {
+		char		*ws;
 
-		for (i = WORD_LEN - 1; i < length && argument == NULL; i++) {
-			if (!isspace((int)buffer[i])) {
-				/* Assume this is where the arg is */
-				argument = buffer + i;
-				break;
-			}
-		}
-
+		/* Skip command and following space to find argument, if any */
+		for (arg = word; arg < end && !isspace((int)*arg); arg++)
+			;
+		for (; arg < end && isspace((int)*arg); arg++)
+			*arg = '\0';
+		if (arg >= end)
+			arg = NULL;
+		
 		/*
 		 * Strip any whitespace out of the argument (by setting it to
 		 * the null character, thus null-terminating the argument)
 		 */
-		for (j = length - 1; isspace((int)buffer[j]); i--)
-			buffer[j] = '\0';
+		for (ws = end - 1; isspace((int)*ws); ws--)
+			*ws = '\0';
 
-		err = exec_cmd(usr, cmds, buffer, argument);
-		if (err == E_OK)
-			response(R_OKAY, "%s", buffer);
+		err = exec_cmd(usr, cmds, word, arg, prop);
+		
+		if (err == E_OK) {
+			if (arg == NULL)
+				response(R_OKAY, "%s", word);
+			else
+				response(R_OKAY, "%s %s", word, arg);
+		} else if (err == E_COMMAND_IGNORED)
+			err = E_OK;
 	}
 	dbug("command processed");
 	free(buffer);
@@ -121,7 +143,11 @@ handle_cmd(void *usr, const struct cmd *cmds)
 }
 
 static enum error
-exec_cmd(void *usr, const struct cmd *cmds, const char *word, const char *arg)
+exec_cmd(void *usr,
+	 const struct cmd *cmds,
+	 const char *word,
+	 const char *arg,
+	 FILE *prop)
 {
 	bool		gotcmd;
 	const struct cmd *cmd;
@@ -131,9 +157,9 @@ exec_cmd(void *usr, const struct cmd *cmds, const char *word, const char *arg)
 	     cmd->function_type != C_END_OF_LIST && !gotcmd;
 	     cmd++) {
 		if (cmd->word == ANY ||
-		    strncmp(cmd->word, word, WORD_LEN - 1) == 0) {
+		    strcmp(cmd->word, word) == 0) {
 			gotcmd = true;
-			err = exec_cmd_struct(usr, cmd, arg);
+			err = exec_cmd_struct(usr, cmd, word, arg, prop);
 		}
 	}
 
@@ -144,7 +170,11 @@ exec_cmd(void *usr, const struct cmd *cmds, const char *word, const char *arg)
 }
 
 static enum error
-exec_cmd_struct(void *usr, const struct cmd *cmd, const char *arg)
+exec_cmd_struct(void *usr,
+		const struct cmd *cmd,
+		const char *word,
+		const char *arg,
+		FILE *prop)
 {
 	enum error	err = E_OK;
 
@@ -163,6 +193,21 @@ exec_cmd_struct(void *usr, const struct cmd *cmd, const char *arg)
 		break;
 	case C_REJECT:		/* Throw a wobbly */
 		err = error(E_COMMAND_REJECTED, "%s", cmd->function.reason);
+		break;
+	case C_IGNORE:
+		err = E_COMMAND_IGNORED;
+		break;
+	case C_PROPAGATE:
+		if (prop == NULL)
+			err = error(E_INTERNAL_ERROR, "%s", MSG_CMD_NOPROP);
+		else {
+			if (arg == NULL)
+				fprintf(prop, "%s\n", word);
+			else
+				fprintf(prop, "%s %s\n", word, arg);
+			fflush(prop);
+		}
+		err = E_COMMAND_IGNORED;
 		break;
 	case C_END_OF_LIST:
 		err = error(E_INTERNAL_ERROR, "%s", MSG_CMD_HITEND);

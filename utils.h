@@ -1,5 +1,5 @@
-/* 
- * messages.h - does exactly what it says on the tin
+/*******************************************************************************
+ * utils.h - miscellaneous utility macros and functions
  *   Part of cuppa, the Common URY Playout Package Architecture
  *
  * Contributors:  Matt Windsor <matt.windsor@ury.org.uk>
@@ -31,21 +31,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef CUPPA_MESSAGES_H
-#define CUPPA_MESSAGES_H
+#ifndef CUPPA_UTILS_H
+#define CUPPA_UTILS_H
 
-/* All of these are defined in messages.c.
- *
- * HOUSEKEEPING: Keep these and their messages.c counterparts in ASCIIbetical
- * order if possible?
+/* Frees and NULLifies the pointer pointed to by *ptr, if it is currently NULL.
+ * Silently ignores the case of ptr being NULL itself.
  */
+#define SAFE_FREE(ptr) do {		\
+	if (ptr != NULL)		\
+		if (*ptr != NULL) {	\
+			free(*ptr);	\
+			*ptr = NULL;	\
+		}			\
+} while (0)
 
-const char     *MSG_CMD_ARGN;	/* Nullary command got an argument */
-const char     *MSG_CMD_ARGU;	/* Unary command got no arguments */
-const char     *MSG_CMD_HITEND; /* Accidentally reached end of commands list */
-const char     *MSG_CMD_NOPROP; /* Command type is PROPAGATE but prop is NULL */
-const char     *MSG_CMD_NOSUCH;	/* No command with the given word */
-const char     *MSG_CMD_NOWORD;	/* No command word given */
-const char     *MSG_ERR_NOMEM;	/* For when the error routine runs out of mem */
-
-#endif				/* !CUPPA_MESSAGES_H  */
+#endif				/* !CUPPA_UTILS_H */

@@ -1,4 +1,4 @@
-/*
+ /*
  * errors.c - error reporting
  *   Part of cuppa, the Common URY Playout Package Architecture
  *
@@ -35,9 +35,9 @@
 #define CUPPA_ERRORS_H
 
 /* Common error macros. */
-#define SAFE_CALLOC(err, ptr, count, type) do {			\
+#define SAFE_CALLOC(err, ptr, count, size) do {			\
 	if (*err == E_OK) {					\
-		ptr = calloc((size_t)count, sizeof(type));	\
+		ptr = calloc((size_t)count, size);		\
 		if (ptr == NULL)				\
 			*err = error(E_NO_MEM,			\
 		 	   "couldn't alloc ptr");		\
@@ -60,7 +60,8 @@ enum error {
 	E_NO_FILE,		/* Tried to read nonexistent file */
 	E_BAD_STATE,		/* State transition not allowed */
 	E_BAD_COMMAND,		/* Command was malformed */
-        E_COMMAND_REJECTED,     /* Command was valid but refused */
+	E_COMMAND_REJECTED,	/* Command was valid but refused */
+	E_COMMAND_IGNORED,	/* Command was silently ignored */
 	/* Environment errors */
 	E_BAD_FILE,		/* Tried to read corrupt file */
 	E_BAD_CONFIG,		/* Program improperly configured */
@@ -79,7 +80,7 @@ enum error {
 /* Categories of blame for errors. */
 enum error_blame {
 	EB_USER,		/* End-user is at fault */
-        EB_POLICY,		/* Request for disallowed action caused error */
+	EB_POLICY,		/* Request for disallowed action caused error */
 	EB_ENVIRONMENT,		/* Environment is at fault */
 	EB_PROGRAMMER,		/* Programmer is at fault */
 	/*--------------------------------------------------------------------*/
@@ -97,5 +98,6 @@ enum error_severity {
 
 void		dbug      (const char *format,...);
 enum error	error(enum error code, const char *format,...);
+enum error_severity severity(enum error code);
 
 #endif				/* !CUPPA_ERRORS_H */

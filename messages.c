@@ -39,6 +39,8 @@ MSG(MSG_CMD_ARGU,
     "Expecting an argument, didn't get one");
 MSG(MSG_CMD_HITEND,
     "Hit end of commands list without stopping");
+MSG(MSG_CMD_NOPROP,
+    "Command type is PROPAGATE, but propagate stream is NULL");
 MSG(MSG_CMD_NOSUCH,
     "Command not recognised");
 MSG(MSG_CMD_NOWORD,

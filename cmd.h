@@ -34,10 +34,12 @@
 #ifndef CUPPA_CMD_H
 #define CUPPA_CMD_H
 
+#include <stdio.h>		/* FILE */
+
 #include "constants.h"		/* WORD_LEN */
 #include "errors.h"		/* enum error */
 
-/*
+/**
  * Any code defining a set of commands SHOULD use these macros and MUST
  * terminate with END_CMDS or an equivalent.
  *
@@ -53,6 +55,8 @@
 #define NCMD(word, func) {word, C_NULLARY, {.ncmd = func}}
 #define UCMD(word, func) {word, C_UNARY, {.ucmd = func}}
 #define REJECT(word, why) {word, C_REJECT, {.reason = why}}
+#define PROPAGATE(word) {word, C_PROPAGATE, {.ignore = '\0'}}
+#define IGNORE(word) {word, C_IGNORE, {.ignore = '\0'}}
 #define END_CMDS {"XXXX", C_END_OF_LIST, {.ignore = '\0'}}
 #define ANY NULL		/* Use for matching all commands not yet
 				 * matched */
@@ -76,6 +80,8 @@ enum cmd_type {
 	C_NULLARY,		/* Command accepts no arguments */
 	C_UNARY,		/* Command accepts one argument */
 	C_REJECT,		/* Command is to be rejected */
+	C_PROPAGATE,		/* Command is to be sent to the prop stream */
+	C_IGNORE,		/* Command is to be ignored without error */
 	C_END_OF_LIST		/* Sentinel for end of command list */
 };
 
@@ -84,7 +90,7 @@ enum cmd_type {
  * macros above where possible.
  */
 struct cmd {
-	const char	word [WORD_LEN];	/* Command word */
+	const char     *word;	/* Command word */
 	enum cmd_type	function_type;	/* Tag for function union */
 	union {
 		nullary_cmd_ptr	ncmd;	/* No-argument command */
@@ -95,6 +101,10 @@ struct cmd {
 };
 
 enum error	check_commands(void *usr, const struct cmd *cmds);
-enum error	handle_cmd(void *usr, const struct cmd *cmds);
+enum error 
+handle_cmd(void *usr,
+	   const struct cmd *cmds,
+	   FILE *in,
+	   FILE *prop);
 
 #endif				/* !CUPPA_CMD_H */

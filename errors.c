@@ -46,7 +46,7 @@ struct e_data {
 	enum error_severity severity;	/* Severity of this error */
 };
 
-/* Names for each error in the system.
+/* Name and behaviour for every error in cuppa.
  * Names should always just be the constant with leading E_ removed.
  * (More human-friendly information should be in the error string.)
  */
@@ -69,6 +69,10 @@ static const struct e_data ERRORS[NUM_ERRORS] = {
 	},
 	{"COMMAND_REJECTED",
 		EB_POLICY,
+		ES_NORMAL
+	},
+	{"COMMAND_IGNORED",
+		EB_PROGRAMMER,	/* Should be ignored, not handled */
 		ES_NORMAL
 	},
 	{"BAD_FILE",
@@ -174,4 +178,10 @@ error(enum error code, const char *format,...)
 		free(buf);
 
 	return code;
+}
+
+enum error_severity
+severity(enum error code)
+{
+	return ERRORS[(int)code].severity;
 }

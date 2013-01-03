@@ -54,16 +54,22 @@ struct r_data {
 /* Data for the responses used by cuppa. */
 static const struct r_data RESPONSES[NUM_RESPONSES] = {
 	/* Name stdout? stderr? */
+	/* Pull */
 	{"OKAY", true, false},	/* R_OKAY */
 	{"WHAT", true, false},	/* R_WHAT */
 	{"FAIL", true, true},	/* R_FAIL */
 	{"OOPS", true, true},	/* R_OOPS */
         {"NOPE", true, true},	/* R_NOPE */
+        /* Push */
 	{"OHAI", true, false},	/* R_OHAI */
 	{"TTFN", true, false},	/* R_TTFN */
 	{"STAT", true, false},	/* R_STAT */
 	{"TIME", true, false},	/* R_TIME */
-	{"DBUG", false, true}	/* R_DBUG */
+	{"DBUG", false, true},	/* R_DBUG */
+        /* Queue specific */
+	{"QPOS", true, false}, 	/* R_QPOS */
+        {"QENT", true, false},	/* R_QENT */
+	{"QMOD", true, false}	/* R_QMOD */
 };
 
 /* Sends a response to standard out and, for certain responses, standard error.

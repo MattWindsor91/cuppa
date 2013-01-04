@@ -69,7 +69,8 @@ static const struct r_data RESPONSES[NUM_RESPONSES] = {
         /* Queue specific */
 	{"QPOS", true, false}, 	/* R_QPOS */
         {"QENT", true, false},	/* R_QENT */
-	{"QMOD", true, false}	/* R_QMOD */
+	{"QMOD", true, false},	/* R_QMOD */
+	{"QNUM", true, false}	/* R_QNUM */
 };
 
 /* Sends a response to standard out and, for certain responses, standard error.

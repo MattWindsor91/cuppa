@@ -57,6 +57,7 @@ enum response {
 	R_QENT,			/* Requested information about a Queue ENTry */
 	R_QMOD,			/* A command caused a Queue MODification */
 	R_QPOS,			/* The current Queue POSition has changed */
+	R_QNUM,			/* Reminder of current number of queue items */
 	/*--------------------------------------------------------------------*/
 	NUM_RESPONSES		/* Number of items in enum */
 };

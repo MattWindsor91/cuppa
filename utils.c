@@ -31,17 +31,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>		/* free */
+#include <ctype.h>		/* isspace */
+#include <stdlib.h>		/* NULL */
 
-/* Frees and NULLifies the pointer pointed to by *ptr, if it is currently NULL.
- * Silently ignores the case of ptr being NULL itself.
+/* Given a char pointer into a null-terminated string, returns the char pointer
+ * marking the next non-whitespace character.  If this character is the null
+ * terminator '\0', then the end of the string was reached.
+ *
+ * Returns the null pointer if a null pointer was provided for 'str'.
  */
-void
-free_if_not_null(void **ptr)
+char           *
+skip_space(char *str)
 {
-	if (ptr != NULL)
-		if (*ptr != NULL) {
-			free(*ptr);
-			*ptr = NULL;
-		}
+	char           *p;
+
+	/* Note: \0 is NOT a space, so this terminates at string end */
+	for (p = str; p != NULL && isspace((int)*p); p++);
+
+	return p;
+}
+
+/* As 'skip_space', but with the condition reversed: the function skips over
+ * all non-space characters (except '\0').
+ */
+char           *
+skip_nonspace(char *str)
+{
+	char           *p;
+
+	for (p = str; p != NULL && *p != '\0' && !isspace((int)*p); p++);
+
+	return p;
+}
+
+/* As 'skip_space', but sets each traversed character to '\0'. */
+char           *
+nullify_space(char *str)
+{
+	char           *p;
+
+	for (p = str; p != NULL && isspace((int)*p); p++)
+		*p = '\0';
+
+	return p;
 }

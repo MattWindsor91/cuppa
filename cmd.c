@@ -44,6 +44,7 @@
 #include "errors.h"		/* error */
 #include "io.h"			/* response */
 #include "messages.h"		/* Messages (usually errors) */
+#include "utils.h"		/* skip_space, nullify_space, skip_unspace */
 
 static enum error
 exec_cmd(void *usr,
@@ -102,21 +103,15 @@ handle_cmd(void *usr, const struct cmd *cmds, FILE *in, FILE *prop)
 	if (err == E_OK) {
 		end = (buffer + length); 
 	
-		/* Drop leading whitespace and find word */
-		for (word = buffer; word < end && isspace((int)*word); word++)
-			*word = '\0';
-		if (word >= end)
+		word = skip_space(buffer);
+		if (*word == '\0')
 			err = error(E_BAD_COMMAND, MSG_CMD_NOWORD);
 	}
 	if (err == E_OK) {
 		char		*ws;
 
-		/* Skip command and following space to find argument, if any */
-		for (arg = word; arg < end && !isspace((int)*arg); arg++)
-			;
-		for (; arg < end && isspace((int)*arg); arg++)
-			*arg = '\0';
-		if (arg >= end)
+		arg = nullify_space(skip_nonspace(word));
+		if (*arg == '\0')
 			arg = NULL;
 		
 		/*

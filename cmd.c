@@ -89,7 +89,7 @@ handle_cmd(void *usr, const struct cmd *cmds, FILE *in, FILE *prop)
 	char           *buffer = NULL;
 	char           *word = NULL;
 	char           *arg = NULL;
-	char	       *end = NULL;
+	char           *end = NULL;
 	size_t		num_bytes = 0;
 
 	length = getline(&buffer, &num_bytes, in);
@@ -101,28 +101,22 @@ handle_cmd(void *usr, const struct cmd *cmds, FILE *in, FILE *prop)
 		err = E_EOF;
 	}
 	if (err == E_OK) {
-		end = (buffer + length); 
-	
+		end = (buffer + length);
+
 		word = skip_space(buffer);
 		if (*word == '\0')
 			err = error(E_BAD_COMMAND, MSG_CMD_NOWORD);
 	}
 	if (err == E_OK) {
-		char		*ws;
-
+		/* Set up the argument, replace space around it with nullchar */
 		arg = nullify_space(skip_nonspace(word));
 		if (*arg == '\0')
 			arg = NULL;
-		
-		/*
-		 * Strip any whitespace out of the argument (by setting it to
-		 * the null character, thus null-terminating the argument)
-		 */
-		for (ws = end - 1; isspace((int)*ws); ws--)
-			*ws = '\0';
+		else
+			nullify_tspace(buffer + length - 1);
 
 		err = exec_cmd(usr, cmds, word, arg, prop);
-		
+
 		if (err == E_OK) {
 			if (arg == NULL)
 				response(R_OKAY, "%s", word);

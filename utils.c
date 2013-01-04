@@ -75,3 +75,18 @@ nullify_space(char *str)
 
 	return p;
 }
+
+/* As 'nullify_space', but acts on trailing space.  Supply with a pointer to
+ * the terminator of a string; obviously, this function works in-place.
+ */
+char		*
+nullify_tspace(char *end)
+{
+	char		*p;
+	
+	for (p = end; p == '\0'; p--);
+	for (p = end; p != NULL && isspace((int)*p); p--)
+		*p = '\0';
+
+	return p;
+}

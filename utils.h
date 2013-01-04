@@ -45,8 +45,10 @@
 		}			\
 } while (0)
 
-char           *skip_space(char *str);	/* Skips to nearest non-space char */
-char	       *skip_nonspace(char *str);	/* Above but skips nonspace */
-char           *nullify_space(char *str);	/* Above but \0s space */
-char	       *nullify_tspace(char *end);	/* Nullifies trailing space */
+char           *endof(char *str);
+char           *skip_space(char *str);
+char           *skip_nonspace(char *str);
+char           *nullify_space(char *str);
+char           *nullify_tspace(char *end);
+
 #endif				/* !CUPPA_UTILS_H */

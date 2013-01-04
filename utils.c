@@ -34,9 +34,22 @@
 #include <ctype.h>		/* isspace */
 #include <stdlib.h>		/* NULL */
 
+/* Given a char pointer into a null-terminated string, returns the pointer
+ * marking the location of that null terminator.  O(n).
+ */
+char		*
+endof(char *str)
+{
+	char		*p;
+	
+	for (p = str; p != NULL && p != '\0'; p++);
+	
+	return p;
+}
+
 /* Given a char pointer into a null-terminated string, returns the char pointer
  * marking the next non-whitespace character.  If this character is the null
- * terminator '\0', then the end of the string was reached.
+ * terminator '\0', then the end of the string was reached.  O(n).
  *
  * Returns the null pointer if a null pointer was provided for 'str'.
  */
@@ -52,7 +65,7 @@ skip_space(char *str)
 }
 
 /* As 'skip_space', but with the condition reversed: the function skips over
- * all non-space characters (except '\0').
+ * all non-space characters (except '\0').  O(n).
  */
 char           *
 skip_nonspace(char *str)
